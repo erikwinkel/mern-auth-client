@@ -1,8 +1,10 @@
 import { useState } from "react"
 import axios from 'axios'
 import jwt from  'jsonwebtoken'
+import { Redirect } from "react-router-dom"
+import Profile from './Profile'
 
-export default function Login() {
+export default function Login(props) {
     // state for the controlled form
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
@@ -19,12 +21,29 @@ export default function Login() {
             }
             const response = await axios.post(`${process.env.REACT_APP_SERVER_URL}/api-v1/users/login`, requestBody)
 
-            console.log(response)
+
+            // destructure response
+            const { token } = response.data
+
+            // save to local storage
+            localStorage.setItem('jwtToken', token)
+
+            // decode jwt
+            const decoded = jwt.decode(token)
+
+            // set user in state
+            props.setCurrentUser(decoded)
 
         } catch(err) {
-            console.log(err)
+            if(err.response.status == 400) {
+                setMessage(err.response.data.msg)
+            } else {
+                console.log(err)
+            }
         }
     }
+
+    if(props.currentUser) return <Redirect to='/profile' component={ Profile } currentUser={ props.currentUser } />
 
     return (
         <div>
